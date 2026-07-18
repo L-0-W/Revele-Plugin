@@ -1,0 +1,54 @@
+---
+title: "Server-Driven UI"
+description: "Crie interfaces React nativas diretamente com código Node.js"
+---
+
+Uma das maiores forças do **Revele JS SDK** é a capacidade de **desenhar telas React no Frontend** escrevendo apenas Javascript de Backend. 
+
+Toda instância do plugin possui a propriedade `plugin.ui`, que atua como um construtor de componentes na tela em tempo real (`UIBuilder`). Cada vez que você chama `.render()`, a tela do usuário no Frontend é atualizada instantaneamente.
+
+## API do UIBuilder
+
+Os métodos suportam *Method Chaining* (encadeamento). 
+Você sempre deve começar com `.clear()` para limpar a tela anterior, empilhar os componentes desejados, e finalizar com `.render()` (ou `.inject()`).
+
+- `.clear()`: Limpa o estado atual da tela.
+- `.render()`: Renderiza os componentes na aba principal do seu plugin.
+- `.inject(slotName: string)`: Injeta os componentes em um local específico (Slot) do frontend.
+- `.addTitle(texto: string)`: Adiciona um texto em destaque (Header).
+- `.addText(texto: string)`: Adiciona um parágrafo convencional.
+- `.addSpinner(texto?: string)`: Adiciona uma animação de carregamento.
+- `.addQrCode(valor: string)`: Adiciona um Card grande com um QR Code renderizado.
+- `.addStatus(status: 'conectado'|'desconectado', msg?: string)`: Adiciona um ícone de status central.
+- `.addButton(label: string, actionName: string, actionParams?: any)`: Adiciona um botão que chama uma função RPC sua remotamente.
+- `.addInput(name: string, type: string, placeholder?: string)`: Adiciona campos de input (ex: text, password).
+
+## Exemplo de Fluxo de Autenticação
+
+```javascript
+plugin.on("connected", () => {
+    // 1. Mostrar carregamento
+    plugin.ui.clear()
+        .addSpinner("Inicializando Whatsapp Baileys...")
+        .render();
+
+    iniciarWhatsapp((qrCodeString) => {
+        // 2. Mostrar QR Code
+        plugin.ui.clear()
+            .addTitle("Autentique seu Celular")
+            .addQrCode(qrCodeString)
+            .addText("Aponte a câmera do seu celular para este código.")
+            .render();
+    }, () => {
+        // 3. Sucesso! Mostrar UI pronta
+        plugin.ui.clear()
+            .addStatus("conectado", "Seu WhatsApp está pronto!")
+            .render();
+            
+        // 4. Injetar Botão Global
+        plugin.ui.clear()
+            .addButton("Enviar por WhatsApp", "enviar_nota")
+            .inject("notas_fiscais_actions");
+    });
+});
+```

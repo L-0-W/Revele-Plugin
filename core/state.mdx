@@ -1,0 +1,47 @@
+---
+title: "Gerenciamento de Estado"
+description: "Evite vazamento de memória gerenciando seu estado dentro da instância do Plugin"
+---
+
+Plugins no Revele são **processos persistentes (Background Services)**. Diferente de uma rota HTTP tradicional onde o ambiente morre e é coletado pelo Garbage Collector a cada Request/Response, o seu Plugin vive por horas ou dias, o que torna as variáveis sensíveis a *Memory Leaks*.
+
+Nunca deixe variáveis de estado (como websockets, contadores e flags de estado) soltas globalmente no arquivo. 
+
+O SDK expõe duas propriedades dedicadas para armazenar estados dentro do ciclo de vida:
+
+### `plugin.sock`
+O espaço reservado oficial para armazenar conexões persistentes, como o driver do Puppeteer, ou a instância do socket do seu Provider (Whatsapp Baileys, Discord, etc).
+
+### `plugin.store`
+Um dicionário genérico e vazio (`{}`) preparado para armazenar estados pequenos e arbitrários da sua lógica de negócios, sem poluir o escopo global.
+
+---
+
+## Exemplo Prático
+
+```javascript
+const { Plugin } = require("js-plugin-lib");
+const plugin = new Plugin("meu-plugin");
+
+plugin.on("connected", () => {
+    // ❌ EVITE FAZER ISSO
+    // global.minhaConexao = iniciarDriver();
+    // global.mensagensEnviadas = 0;
+    
+    // ✅ FAÇA ISSO
+    plugin.sock = iniciarDriver();
+    plugin.store.mensagensEnviadas = 0;
+});
+
+async function dispararMensagem(alvo) {
+    // Usando o driver instanciado anteriormente
+    plugin.sock.sendMessage(alvo, "Pew Pew!");
+    
+    // Usando variáveis globais persistentes de forma limpa
+    plugin.store.mensagensEnviadas++;
+    
+    return plugin.store.mensagensEnviadas;
+}
+
+plugin.actions.push(dispararMensagem);
+```

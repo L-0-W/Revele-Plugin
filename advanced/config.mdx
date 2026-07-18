@@ -1,0 +1,25 @@
+---
+title: "Plugin.toml"
+description: "Configuração manifest obrigatória para o Rust mapear o seu plugin"
+---
+
+Para que o orquestrador Rust do Revele carregue e identifique o seu plugin, ele exige a presença de um arquivo manifest `plugin.toml` na raiz da pasta do seu plugin Node.js.
+
+## Estrutura Básica
+
+```toml plugin.toml
+name = "vendas-bot"
+imagem_url = "https://url_da_imagem_do_icone.jpg"
+main_file = "index.js"
+version = "1.0.0"
+description = "Assistente Virtual de Marketing. Dispara automações e cupons."
+author = "Revele Ecosystem"
+has_ui = true
+```
+
+### Detalhamento das Propriedades
+
+- **`name`**: (Obrigatório) O ID único do seu plugin. Ele deve coincidir exatamente com o nome que você passa no construtor `new Plugin("vendas-bot")` dentro do NodeJS. O Rust usa este nome para nomear o arquivo de socket no sistema operacional (ex: `/tmp/vendas-bot.sock`).
+- **`imagem_url`**: Um link HTTPS válido para a imagem que será usada no frontend (Marketplace e Aba do Plugin).
+- **`main_file`**: Arquivo entry-point em que o Node.js deve dar o boot inicial (geralmente `index.js` na pasta `dist/` se for compilado de TS).
+- **`has_ui`**: Se `true`, o Revele abrirá uma aba lateral com tela em branco reservada para este plugin no Frontend, onde as requisições `.render()` do `UIBuilder` funcionarão. Se for puramente um *background job* invisível, passe `false`.

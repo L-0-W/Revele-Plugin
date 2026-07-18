@@ -1,0 +1,40 @@
+---
+title: "RPC Automático"
+description: "Exponha funções Node.js para serem executadas via Rust ou React"
+---
+
+Em integrações convencionais, você precisaria criar grandes servidores HTTP ou blocos `switch/case` para responder a requisições do sistema principal. O Revele JS Plugin extingue essa necessidade com o array `plugin.actions`.
+
+Qualquer função que você inserir no `plugin.actions` será magicamente roteada pela biblioteca, mapeada e disponibilizada para o Rust/React invocar remotamente com os parâmetros corretos.
+
+## Como Expor Funções
+
+### 1. Crie sua função
+
+Crie qualquer função, síncrona ou assíncrona. Os argumentos da função serão inferidos automaticamente pelo SDK.
+
+```javascript
+async function enviarSms(numeroDestino, mensagem) {
+    if (!numeroDestino) throw new Error("Número é obrigatório!");
+    
+    // logica de envio...
+    return { sucesso: true, id_mensagem: 999 };
+}
+```
+
+### 2. Registre no Plugin
+
+```javascript
+plugin.actions.push(enviarSms);
+```
+
+## Como a execução funciona?
+
+Quando o Frontend ou o Backend Rust quiserem executar essa ação, eles enviarão um payload JSON interno:
+`{ "action": "enviarSms", "input": ["11999999999", "Olá!"] }`
+
+O SDK lidará com o fluxo:
+1. Encontrará a função `enviarSms` dentro do registro.
+2. Executará passando `"11999999999"` e `"Olá!"` como os respectivos parâmetros.
+3. Pegará o retorno `{ sucesso: true }` e devolverá ao processo que chamou (Orquestrador).
+4. **Tratamento de Erros:** Se a sua função disparar um `throw new Error(...)`, o erro será formatado e devolvido graciosamente para ser exibido na interface do Revele sem quebrar o Node.js.

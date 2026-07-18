@@ -1,0 +1,51 @@
+---
+title: "Extension Slots (Injeção de UI)"
+description: "Injete botões contextuais e UIs em áreas nativas do Revele ERP"
+---
+
+Em integrações complexas, você muitas vezes não deseja que o usuário vá até a aba do Plugin para executar uma ação, mas sim que uma funcionalidade esteja diretamente atrelada ao painel diário dele (ex: um botão na tabela de Pedidos, Notas Fiscais ou Produtos).
+
+O Revele Frontend implementa **Extension Slots**, que são "ganchos" onde o SDK consegue pendurar componentes Server-Driven usando o método `.inject("nome_do_slot")`.
+
+## Como Injetar
+
+Use o método `.inject()` passando o nome literal do Slot correspondente.
+
+```javascript
+plugin.ui.clear()
+    .addButton("Gerar Etiqueta Correios", "gerar_etiqueta_action")
+    .inject("pedidos_actions");
+```
+
+Quando um usuário clica num botão injetado por `.addButton()`, ele chamará automaticamente a sua ação mapeada (neste caso `gerar_etiqueta_action`).
+
+## ContextData (Payload)
+
+Ao injetar um componente (como um Botão) numa página nativa do ERP, o botão absorverá o contexto do local onde foi injetado (Ex: Os itens que o usuário selecionou na tabela).
+
+O primeiro argumento da sua função receberá a propriedade `contextData`.
+
+```javascript
+// Exemplo de action mapeada:
+async function gerar_etiqueta_action(contextData) {
+    const notasSelecionadas = contextData.ids_selecionados;
+    
+    // Busca informações completas das notas selecionadas
+    for (let id of notasSelecionadas) {
+        const nota = await plugin.db.notas_fiscais.findById(id);
+        console.log("Processando nota:", nota.numero);
+    }
+}
+plugin.actions.push(gerar_etiqueta_action);
+```
+
+## Lista de Slots Oficiais Atuais
+
+| Slot Name | Local no Frontend | O que o `contextData` envia |
+| :--- | :--- | :--- |
+| `notas_fiscais_actions` | Cabeçalho/Tabela de **Notas Fiscais** | `{ ids_selecionados: string[] }` |
+| `pedidos_actions` | Cabeçalho/Tabela de **Pedidos** | `{ ids_selecionados: string[] }` |
+| `produtos_actions` | Cabeçalho/Tabela de **Produtos** | `{ ids_selecionados: string[] }` |
+| `clientes_actions` | Cabeçalho/Tabela de **Clientes** | `{ ids_selecionados: string[] }` |
+
+*(Nota: À medida que o frontend evolui, novos slots podem ser disponibilizados).*

@@ -1,47 +1,49 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "Aprenda a instalar o SDK e iniciar seu primeiro plugin no ecosistema Revele"
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+## Instalação
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
-
-## Prerequisites
-
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+Para utilizar a biblioteca `js-plugin-lib` em um novo projeto de plugin, você deve instalá-la diretamente do repositório Git.
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
-
+  <Step title="Inicie um novo projeto Node">
+    Crie uma pasta para seu plugin e inicialize o NPM.
     ```bash
-    npm install your-package
+    mkdir meu-novo-plugin
+    cd meu-novo-plugin
+    npm init -y
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
-
+  <Step title="Instale o SDK">
+    Execute o comando de instalação utilizando SSH. Garanta que suas chaves SSH do GitHub estão configuradas.
     ```bash
-    your-cli init
+    ssh -T git@github.com
+    npm install git+ssh://git@github.com:L-0-W/RevelePortal-Plugin.git
     ```
+    
+    > **Nota:** Como o projeto é construído em TypeScript, ao instalar do Git, o NPM executará automaticamente o script `prepare` para transpilar o código (criando a pasta `dist/`).
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+  <Step title="Crie o arquivo principal">
+    Crie seu arquivo `index.js` (ou `.ts` se preferir) e instancie o Plugin.
+    ```javascript index.js
+    const { Plugin } = require("js-plugin-lib");
 
-    ```bash
-    your-cli start
+    // O nome deve ser IDÊNTICO ao nome definido no arquivo plugin.toml
+    const plugin = new Plugin("meu-plugin");
+
+    plugin.on("connected", () => {
+        console.log("Uhul! Estamos conectados ao orquestrador.");
+    });
     ```
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## O que acontece por baixo dos panos?
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+Quando a classe `Plugin` é instanciada:
+
+1. O Node.js **pausa** e aguarda o orquestrador Rust enviar o comando `READY` via `stdin/stdout`.
+2. Após o Handshake, um Socket IPC (Unix Domain Socket ou Named Pipe) é estabelecido.
+3. O evento `connected` é emitido, indicando que é seguro interagir com o banco de dados e UI do Revele.

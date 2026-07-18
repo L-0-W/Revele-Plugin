@@ -1,0 +1,38 @@
+---
+title: "Eventos de Ciclo de Vida"
+description: "Entenda o ciclo de vida e como reagir à eventos do plugin"
+---
+
+O `Plugin` herda da classe `EventEmitter` padrão do Node.js. Você pode (e deve) escutar os eventos globais para saber quando começar a executar sua lógica de negócio.
+
+## Eventos Principais
+
+### `connected`
+Ocorre quando o orquestrador Rust dá o sinal verde e a conexão IPC (Socket) foi estabelecida com sucesso.
+**É o ponto de partida seguro** para iniciar conexões de banco de dados, iniciar drivers pesados (como Puppeteer ou Baileys) e inicializar sua UI.
+
+```javascript
+plugin.on("connected", () => {
+    console.log("Conectado ao orquestrador.");
+    // Inicialize sua lógica principal
+});
+```
+
+### `disconnected`
+Ocorre se o Rust encerrar a conexão, o processo principal morrer, ou for desativado manualmente pelo usuário no painel do Revele.
+
+```javascript
+plugin.on("disconnected", () => {
+    console.log("Desconectado do Revele. Iniciando desligamento gracioso...");
+    // Faça a limpeza de memória, feche browsers, etc.
+});
+```
+
+### `error`
+Ocorre caso a conexão do Socket quebre repentinamente ou o Sistema Operacional negue permissão de IO.
+
+```javascript
+plugin.on("error", (err) => {
+    console.error("Erro fatal de IPC:", err);
+});
+```

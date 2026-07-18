@@ -1,0 +1,60 @@
+---
+title: "Banco de Dados (Mini-ORM)"
+description: "Faça requisições SQL seguras e diretas pelo orquestrador Rust"
+---
+
+Por questões de arquitetura e segurança, os plugins do Revele **não** devem estabelecer conexões diretas via driver nativo (ex: TCP Postgres/MySQL) para o banco de dados principal. Toda comunicação com o banco é delegada ao Orquestrador Rust.
+
+O SDK Node fornece uma interface de Mini-ORM completa. Quando você usa a API `plugin.db`, o NodeJS faz um RPC Reverso enviando os parâmetros de Query para o Rust e recebe os dados já convertidos para JSON em uma `Promise`.
+
+## Operações CRUD Comuns
+
+Você tem suporte completo para buscar, inserir, atualizar e deletar.
+
+```javascript
+plugin.on("connected", async () => {
+    try {
+        // Busca clientes filtrando por status
+        const clientes = await plugin.db.clientes.findMany({ status: 'ativo' });
+        
+        // Insere um novo pedido
+        const novoPedido = await plugin.db.pedidos.create({ valor: 150.0 });
+        
+        // Atualiza um registro
+        await plugin.db.clientes.update(1, { status: 'inativo' });
+        
+        // Deleta um registro
+        await plugin.db.pedidos.delete(novoPedido.id);
+        
+    } catch (err) {
+        console.error("Erro ao interagir com o banco:", err.message);
+    }
+});
+```
+
+## Tabelas Pré-Mapeadas
+
+Existem atalhos pré-configurados que trazem forte tipagem e auto-complete para as principais entidades do ERP:
+
+- `plugin.db.clientes`
+- `plugin.db.pedidos`
+- `plugin.db.produtos`
+
+Todos suportam: `.findMany(filtros)`, `.findById(id)`, `.create(dados)`, `.update(id, dados)`, `.delete(id)`.
+
+## Tabelas Genéricas (Customizadas)
+
+Caso seu plugin tenha tabelas criadas especificamente para ele (ex: logs locais do plugin, configurações), use os métodos genéricos diretos da raiz `.db`:
+
+- `plugin.db.insert('tabela_nome', dados)`
+- `plugin.db.update('tabela_nome', id, dados)`
+- `plugin.db.delete('tabela_nome', id)`
+- `plugin.db.query('tabela_nome', filtros)`
+
+```javascript
+await plugin.db.insert('logs_whatsapp', { 
+    numero: '11999', 
+    mensagem: 'Olá', 
+    timestamp: Date.now() 
+});
+```
